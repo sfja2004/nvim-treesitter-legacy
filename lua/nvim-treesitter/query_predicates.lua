@@ -127,6 +127,21 @@ query.add_directive("set-lang-from-mimetype!", function(match, _, bufnr, pred, m
   end
 end, opts)
 
+-- In Neovim 0.12, match[id] returns a list of nodes instead of a single node.
+-- Unwrap to get the first node for backwards compatibility.
+--
+-- See https://github.com/nvim-treesitter/nvim-treesitter/issues/8636
+local function get_node(match, id)
+  local val = match[id]
+  if not val then
+    return nil
+  end
+  if type(val) == "table" then
+    return val[1]
+  end
+  return val
+end
+
 ---@param match (TSNode|nil)[]
 ---@param _ string
 ---@param bufnr integer
@@ -134,7 +149,7 @@ end, opts)
 ---@return boolean|nil
 query.add_directive("set-lang-from-info-string!", function(match, _, bufnr, pred, metadata)
   local capture_id = pred[2]
-  local node = match[capture_id]
+  local node = get_node(match, capture_id)
   if not node then
     return
   end
